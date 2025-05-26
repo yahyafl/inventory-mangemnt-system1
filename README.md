@@ -233,5 +233,4 @@ yarn build
 
 **Built with ❤️ using React, Vite, and Tailwind CSS**
 
- [live demo](https://inventory-mangemnt-system1.vercel.app/)
-
+ [live demo](https://inventory-mangemnt-system1.vercel.app/add-item)
