@@ -266,19 +266,6 @@ If you encounter any issues or have questions:
 
 **Built with ❤️ using React, Vite, and Tailwind CSS**
 
-For more information, visit our [documentation](docs/) or try the [live demo](https://your-demo-url.com).
+ [live demo](https://your-demo-url.com).
 ```
 
-This comprehensive README file includes:
-
-- **Clear project description** with feature highlights
-- **Quick start guide** with step-by-step installation
-- **Detailed usage instructions** for all features
-- **Technical documentation** including project structure
-- **Configuration guide** for environment variables
-- **Customization instructions** for extending the app
-- **Deployment options** for various platforms
-- **Contributing guidelines** for open source collaboration
-- **Future roadmap** for planned enhancements
-
-The README is well-structured with emojis, badges, code blocks, and clear sections that make it easy for developers to understand and use your inventory management system!
