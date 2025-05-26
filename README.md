@@ -227,45 +227,11 @@ yarn build
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
 
-If you encounter any issues or have questions:
-
-1. Check the [Issues](../../issues) page for existing solutions
-2. Create a new issue with detailed information
-3. Use the AI chatbot for inventory management questions
-4. Contact the development team
-
-## 🔮 Future Enhancements
-
-- [ ] Real-time notifications for low stock alerts
-- [ ] Barcode scanning integration
-- [ ] Export functionality (CSV, PDF)
-- [ ] Advanced reporting and analytics
-- [ ] Multi-user support with authentication
-- [ ] Integration with external APIs (suppliers, shipping)
-- [ ] Mobile app version
-- [ ] Inventory forecasting with AI
-
-## 📊 Screenshots
-
-### Dashboard
-![Dashboard Overview](screenshots/dashboard.png)
-
-### Inventory Management
-![Inventory List](screenshots/inventory-list.png)
-
-### AI Chatbot
-![AI Assistant](screenshots/chatbot.png)
-
----
 
 **Built with ❤️ using React, Vite, and Tailwind CSS**
 
- [live demo](https://your-demo-url.com).
-```
+ [live demo](https://inventory-mangemnt-system1.vercel.app/)
 
