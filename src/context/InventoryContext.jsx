@@ -1,126 +1,73 @@
-"use client"
+import { useInventory } from "../context/InventoryContext"
+import SearchBar from "../components/SearchBar"
+import ItemCard from "../components/ItemCard"
+import StatusFilter from "../components/StatusFilter"
 
-import { createContext, useContext, useState, useEffect } from "react"
+const InventoryList = () => {
+  const { filteredItems, searchTerm, statusFilter } = useInventory()
 
-const InventoryContext = createContext()
-
-export const useInventory = () => {
-  const context = useContext(InventoryContext)
-  if (!context) {
-    throw new Error("useInventory must be used within an InventoryProvider")
-  }
-  return context
-}
-
-export const InventoryProvider = ({ children }) => {
-  const [items, setItems] = useState([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-
-  // Load items from localStorage on component mount
-  useEffect(() => {
-    const savedItems = localStorage.getItem("inventoryItems")
-    if (savedItems) {
-      setItems(JSON.parse(savedItems))
+  const getSearchResultsText = () => {
+    if (searchTerm && statusFilter !== "all") {
+      return `${filteredItems.length} items found for "${searchTerm}" with status "${statusFilter}"`
+    } else if (searchTerm) {
+      return `${filteredItems.length} items found for "${searchTerm}"`
+    } else if (statusFilter !== "all") {
+      return `${filteredItems.length} items with status "${statusFilter}"`
     } else {
-      // Sample data
-      const sampleItems = [
-        {
-          id: 1,
-          name: "Laptop Dell XPS 13",
-          description: "High-performance laptop for business use",
-          quantity: 15,
-          price: 999.99,
-          category: "Electronics",
-          status: "in-stock",
-          sku: "DELL-XPS-001",
-          supplier: "Dell Inc.",
-          lastUpdated: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          name: "Office Chair",
-          description: "Ergonomic office chair with lumbar support",
-          quantity: 3,
-          price: 299.99,
-          category: "Furniture",
-          status: "low-stock",
-          sku: "CHAIR-ERG-001",
-          supplier: "Office Depot",
-          lastUpdated: new Date().toISOString(),
-        },
-      ]
-      setItems(sampleItems)
-      localStorage.setItem("inventoryItems", JSON.stringify(sampleItems))
-    }
-  }, [])
-
-  // Save items to localStorage whenever items change
-  useEffect(() => {
-    localStorage.setItem("inventoryItems", JSON.stringify(items))
-  }, [items])
-
-  const addItem = (item) => {
-    const newItem = {
-      ...item,
-      id: Date.now(),
-      lastUpdated: new Date().toISOString(),
-    }
-    setItems((prev) => [...prev, newItem])
-  }
-
-  const updateItem = (id, updatedItem) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === Number.parseInt(id)
-          ? { ...updatedItem, id: Number.parseInt(id), lastUpdated: new Date().toISOString() }
-          : item,
-      ),
-    )
-  }
-
-  const deleteItem = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id))
-  }
-
-  const getItemById = (id) => {
-    return items.find((item) => item.id === Number.parseInt(id))
-  }
-
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter
-
-    return matchesSearch && matchesStatus
-  })
-
-  const getStatusCounts = () => {
-    return {
-      total: items.length,
-      inStock: items.filter((item) => item.status === "in-stock").length,
-      lowStock: items.filter((item) => item.status === "low-stock").length,
-      ordered: items.filter((item) => item.status === "ordered").length,
-      discontinued: items.filter((item) => item.status === "discontinued").length,
+      return `${filteredItems.length} total items`
     }
   }
 
-  const value = {
-    items,
-    filteredItems,
-    searchTerm,
-    setSearchTerm,
-    statusFilter,
-    setStatusFilter,
-    addItem,
-    updateItem,
-    deleteItem,
-    getItemById,
-    getStatusCounts,
-  }
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Inventory</h1>
+        <p className="text-gray-600">{getSearchResultsText()}</p>
+      </div>
 
-  return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <SearchBar />
+        </div>
+        <div className="md:w-64">
+          <StatusFilter />
+        </div>
+      </div>
+
+      {searchTerm && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-blue-800 text-sm">
+            <span className="font-medium">Searching for:</span> "{searchTerm}"
+            {statusFilter !== "all" && (
+              <span>
+                {" "}
+                <span className="font-medium">with status:</span> {statusFilter}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+
+      {filteredItems.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">
+            {searchTerm || statusFilter !== "all"
+              ? "No items found matching your criteria."
+              : "No items in inventory yet."}
+          </p>
+          {(searchTerm || statusFilter !== "all") && (
+            <p className="text-gray-400 text-sm mt-2">Try adjusting your search terms or filters.</p>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.map((item) => (
+            <ItemCard key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
+
+export default InventoryList
