@@ -8,7 +8,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! I'm your inventory assistant. I can help you with questions about your inventory, stock levels, and management tips. How can I help you today?",
+      text: "Hello! I'm your AI-powered inventory assistant using Google Gemini. I can help you with:\n\n• Managing inventory items\n• Understanding stock statuses\n• Search and filtering tips\n• Best practices for inventory management\n\nWhat would you like to know about your inventory?",
       isBot: true,
       timestamp: new Date(),
     },
@@ -16,45 +16,73 @@ const ChatBot = () => {
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  // Simulated AI responses - In a real app, you'd integrate with Gemini API
+  // Real Gemini AI integration
   const getAIResponse = async (message) => {
     setIsLoading(true)
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `You are an inventory management assistant. Help the user with their inventory-related question: "${message}". 
+            
+            Context: This is an inventory management system where users can:
+            - Add, edit, and delete inventory items
+            - Search and filter items by name, description, SKU, or status
+            - Manage item statuses: In Stock, Low Stock, Ordered, Discontinued
+            - View dashboard with inventory statistics
+            
+            Provide helpful, concise responses about inventory management. If the question is not inventory-related, politely redirect to inventory topics.`,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+            safetySettings: [
+              {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE",
+              },
+              {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE",
+              },
+            ],
+          }),
+        },
+      )
 
-    const lowerMessage = message.toLowerCase()
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+      }
 
-    let response = ""
+      const data = await response.json()
 
-    if (lowerMessage.includes("stock") || lowerMessage.includes("inventory")) {
-      response =
-        "I can help you manage your inventory! You can check stock levels, add new items, or update existing ones. Would you like me to guide you through any specific inventory task?"
-    } else if (lowerMessage.includes("add") || lowerMessage.includes("create")) {
-      response =
-        "To add a new item to your inventory, click on 'Add Item' in the navigation menu. Make sure to fill in all required fields including name, SKU, quantity, price, and status."
-    } else if (lowerMessage.includes("search") || lowerMessage.includes("find")) {
-      response =
-        "You can search for items using the search bar on the Inventory page. You can search by item name, description, or SKU. You can also filter by status (In Stock, Low Stock, Ordered, Discontinued)."
-    } else if (lowerMessage.includes("low stock") || lowerMessage.includes("alert")) {
-      response =
-        "Low stock items are automatically highlighted in your inventory. You can filter to see only low stock items using the status filter. Consider setting up reorder points for critical items."
-    } else if (lowerMessage.includes("delete") || lowerMessage.includes("remove")) {
-      response =
-        "To delete an item, go to the Inventory page, find the item you want to remove, and click the red trash icon. You'll be asked to confirm the deletion to prevent accidental removals."
-    } else if (lowerMessage.includes("edit") || lowerMessage.includes("update")) {
-      response =
-        "To edit an item, go to the Inventory page, find the item, and click the blue 'Edit' button. You can update any field including quantity, price, status, and other details."
-    } else if (lowerMessage.includes("help") || lowerMessage.includes("how")) {
-      response =
-        "I'm here to help! You can ask me about:\n• Adding, editing, or deleting inventory items\n• Searching and filtering your inventory\n• Managing stock levels and alerts\n• Understanding different item statuses\n• General inventory management tips"
-    } else {
-      response =
-        "I understand you're asking about inventory management. Could you be more specific? I can help with adding items, checking stock levels, searching inventory, or managing item statuses."
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        return data.candidates[0].content.parts[0].text
+      } else {
+        throw new Error("Invalid response format from Gemini API")
+      }
+    } catch (error) {
+      console.error("Gemini API Error:", error)
+      return "I'm sorry, I'm having trouble connecting to my AI service right now. Please try again in a moment, or feel free to explore the inventory management features on your own!"
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
-    return response
   }
 
   const handleSendMessage = async () => {
