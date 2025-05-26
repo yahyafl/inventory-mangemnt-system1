@@ -16,13 +16,28 @@ const ChatBot = () => {
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  // Real Gemini AI integration
+  // Real Gemini AI integration with updated model
   const getAIResponse = async (message) => {
     setIsLoading(true)
 
     try {
+      // Check if API key exists
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+
+      console.log("🔍 Debug Info:")
+      console.log("API Key exists:", !!apiKey)
+      console.log("API Key length:", apiKey ? apiKey.length : 0)
+      console.log("API Key starts with:", apiKey ? apiKey.substring(0, 10) + "..." : "No key")
+
+      if (!apiKey) {
+        throw new Error("Gemini API key not found. Please add VITE_GEMINI_API_KEY to your environment variables.")
+      }
+
+      console.log("🚀 Making API request to Gemini with updated model...")
+
+      // Updated API endpoint with correct model name
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
@@ -61,16 +76,27 @@ const ChatBot = () => {
                 category: "HARM_CATEGORY_HATE_SPEECH",
                 threshold: "BLOCK_MEDIUM_AND_ABOVE",
               },
+              {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE",
+              },
+              {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE",
+              },
             ],
           }),
         },
       )
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`)
+        const errorData = await response.text()
+        console.error("API Error Response:", errorData)
+        throw new Error(`API request failed: ${response.status} - ${errorData}`)
       }
 
       const data = await response.json()
+      console.log("✅ API Response successful:", data)
 
       if (data.candidates && data.candidates[0] && data.candidates[0].content) {
         return data.candidates[0].content.parts[0].text
@@ -79,10 +105,47 @@ const ChatBot = () => {
       }
     } catch (error) {
       console.error("Gemini API Error:", error)
-      return "I'm sorry, I'm having trouble connecting to my AI service right now. Please try again in a moment, or feel free to explore the inventory management features on your own!"
+
+      // Fallback responses for common inventory questions
+      const fallbackResponse = getFallbackResponse(message)
+      return (
+        fallbackResponse ||
+        "I'm sorry, I'm having trouble connecting to my AI service right now. Please try again in a moment, or feel free to explore the inventory management features on your own!"
+      )
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Fallback responses when API is not available
+  const getFallbackResponse = (message) => {
+    const lowerMessage = message.toLowerCase()
+
+    if (lowerMessage.includes("add") && lowerMessage.includes("item")) {
+      return "To add a new item:\n1. Click 'Add Item' in the navigation\n2. Fill in the required fields (name, SKU, description, etc.)\n3. Set the quantity and price\n4. Choose the appropriate status\n5. Click 'Add Item' to save"
+    }
+
+    if (lowerMessage.includes("search")) {
+      return "You can search for items using:\n• The search bar on the Inventory page\n• Press Ctrl+K for quick search\n• Search by name, description, SKU, category, or supplier\n• Use the status filter to narrow results"
+    }
+
+    if (lowerMessage.includes("status")) {
+      return "Item statuses:\n• In Stock: Items available for sale\n• Low Stock: Items running low (yellow warning)\n• Ordered: Items that have been reordered\n• Discontinued: Items no longer available"
+    }
+
+    if (lowerMessage.includes("edit") || lowerMessage.includes("update")) {
+      return "To edit an item:\n1. Go to the Inventory page\n2. Find the item you want to edit\n3. Click the blue 'Edit' button\n4. Update the fields as needed\n5. Click 'Update Item' to save changes"
+    }
+
+    if (lowerMessage.includes("delete")) {
+      return "To delete an item:\n1. Go to the Inventory page\n2. Find the item you want to delete\n3. Click the red trash icon\n4. Confirm deletion in the popup dialog"
+    }
+
+    if (lowerMessage.includes("hello") || lowerMessage.includes("hi")) {
+      return "Hello! I'm here to help you with your inventory management. You can ask me about:\n• Adding or editing items\n• Understanding item statuses\n• Search and filtering features\n• Best practices for inventory management\n\nWhat would you like to know?"
+    }
+
+    return null
   }
 
   const handleSendMessage = async () => {
@@ -96,9 +159,10 @@ const ChatBot = () => {
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const currentMessage = inputMessage
     setInputMessage("")
 
-    const aiResponse = await getAIResponse(inputMessage)
+    const aiResponse = await getAIResponse(currentMessage)
 
     const botMessage = {
       id: Date.now() + 1,
@@ -119,21 +183,27 @@ const ChatBot = () => {
 
   return (
     <>
-      {/* Chat Toggle Button - Made Much Bigger */}
+      {/* Chat Toggle Button - Extra Large */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-6 rounded-full shadow-xl hover:bg-blue-700 transition-all duration-300 hover:scale-110 z-50 w-20 h-20 flex items-center justify-center"
+        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all duration-300 hover:scale-110 z-50 w-16 h-16 flex items-center justify-center"
+        title="Open AI Assistant"
       >
-        {isOpen ? <X className="h-10 w-10" /> : <MessageCircle className="h-10 w-10" />}
+        {isOpen ? <X className="h-8 w-8" /> : <MessageCircle className="h-8 w-8" />}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 w-80 h-96 bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col z-50">
+        <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50">
           {/* Header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center space-x-2">
-            <Bot className="h-5 w-5" />
-            <span className="font-medium">Inventory Assistant</span>
+          <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Bot className="h-5 w-5" />
+              <span className="font-medium">Inventory Assistant</span>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="text-white hover:text-gray-200 transition-colors">
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           {/* Messages */}
@@ -141,7 +211,7 @@ const ChatBot = () => {
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.isBot ? "justify-start" : "justify-end"}`}>
                 <div
-                  className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                  className={`max-w-[80%] px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
                     message.isBot ? "bg-gray-100 text-gray-800" : "bg-blue-600 text-white"
                   }`}
                 >
@@ -178,16 +248,21 @@ const ChatBot = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask about your inventory..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={isLoading}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={isLoading || !inputMessage.trim()}
-                className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Send className="h-4 w-4" />
               </button>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              {import.meta.env.VITE_GEMINI_API_KEY
+                ? "✅ AI Assistant Ready (Gemini 1.5 Flash)"
+                : "⚠️ Add VITE_GEMINI_API_KEY to enable AI features"}
             </div>
           </div>
         </div>
