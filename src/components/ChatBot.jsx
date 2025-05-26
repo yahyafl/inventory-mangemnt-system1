@@ -119,12 +119,12 @@ const ChatBot = () => {
 
   return (
     <>
-      {/* Chat Toggle Button */}
+      {/* Chat Toggle Button - Made Much Bigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+        className="fixed bottom-8 right-8 bg-blue-600 text-white p-6 rounded-full shadow-xl hover:bg-blue-700 transition-all duration-300 hover:scale-110 z-50 w-20 h-20 flex items-center justify-center"
       >
-        {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {isOpen ? <X className="h-10 w-10" /> : <MessageCircle className="h-10 w-10" />}
       </button>
 
       {/* Chat Window */}

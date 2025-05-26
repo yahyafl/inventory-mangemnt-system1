@@ -1,8 +1,11 @@
+"use client"
+
 import { useInventory } from "../context/InventoryContext"
 import { Package, AlertTriangle, ShoppingCart, XCircle, TrendingUp } from "lucide-react"
+import { Link } from "react-router-dom"
 
 const Dashboard = () => {
-  const { getStatusCounts } = useInventory()
+  const { getStatusCounts, items } = useInventory()
   const counts = getStatusCounts()
 
   const stats = [
@@ -72,17 +75,63 @@ const Dashboard = () => {
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
-            <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-600">Add New Item</p>
+          <Link
+            to="/add-item"
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer group"
+          >
+            <Package className="h-8 w-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors" />
+            <p className="text-sm font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
+              Add New Item
+            </p>
+          </Link>
+
+          <button
+            onClick={() => {
+              // Filter to show only items with quantities and create a simple report
+              const totalValue = items.reduce((sum, item) => sum + item.quantity * item.price, 0)
+              const avgPrice = items.length > 0 ? totalValue / items.length : 0
+
+              alert(
+                `📊 Inventory Report:\n\n` +
+                  `Total Items: ${items.length}\n` +
+                  `Total Inventory Value: $${totalValue.toFixed(2)}\n` +
+                  `Average Item Price: $${avgPrice.toFixed(2)}\n` +
+                  `In Stock: ${counts.inStock}\n` +
+                  `Low Stock: ${counts.lowStock}\n` +
+                  `Ordered: ${counts.ordered}\n` +
+                  `Discontinued: ${counts.discontinued}`,
+              )
+            }}
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors group"
+          >
+            <TrendingUp className="h-8 w-8 text-gray-400 group-hover:text-green-500 mx-auto mb-2 transition-colors" />
+            <p className="text-sm font-medium text-gray-600 group-hover:text-green-600 transition-colors">
+              View Reports
+            </p>
           </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors">
-            <TrendingUp className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-600">View Reports</p>
-          </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
-            <AlertTriangle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-600">Low Stock Alerts</p>
+
+          <button
+            onClick={() => {
+              const lowStockItems = items.filter((item) => item.status === "low-stock")
+              if (lowStockItems.length === 0) {
+                alert("✅ Great news! No items are currently low on stock.")
+              } else {
+                const itemsList = lowStockItems.map((item) => `• ${item.name} (${item.quantity} remaining)`).join("\n")
+
+                alert(
+                  `⚠️ Low Stock Alert!\n\n` +
+                    `${lowStockItems.length} items need attention:\n\n` +
+                    `${itemsList}\n\n` +
+                    `Consider reordering these items soon.`,
+                )
+              }
+            }}
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition-colors group"
+          >
+            <AlertTriangle className="h-8 w-8 text-gray-400 group-hover:text-yellow-500 mx-auto mb-2 transition-colors" />
+            <p className="text-sm font-medium text-gray-600 group-hover:text-yellow-600 transition-colors">
+              Low Stock Alerts
+            </p>
           </button>
         </div>
       </div>
